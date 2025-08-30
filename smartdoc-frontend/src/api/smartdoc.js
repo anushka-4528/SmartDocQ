@@ -1,27 +1,37 @@
-import api from './client';
+// central API helpers for SmartDocQ
+import axios from "axios";
 
-// POST /upload  -> returns { message, doc_id, meta, text }
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5001/api/v1";
+
 export async function uploadFile(file) {
   const form = new FormData();
-  form.append('file', file);
-  const { data } = await api.post('/upload', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  form.append("file", file);
+  const { data } = await axios.post(`${API_BASE_URL}/upload`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
-  return data;
+  return data; // {message, doc_id, meta, text}
 }
 
-// POST /embed_doc  body: { doc_id } -> { message, doc_id, chunks }
-export async function embedDoc(doc_id, chunk_size = 1200, overlap = 200) {
-  const { data } = await api.post('/embed_doc', { doc_id, chunk_size, overlap });
-  return data;
+export async function embedDoc(doc_id) {
+  const { data } = await axios.post(`${API_BASE_URL}/embed_doc`, { doc_id });
+  return data; // {message, doc_id, chunks}
 }
 
-// POST /ask  body: { question, doc_id, session_id, top_k, ... } -> parsed + {sources?}
-export async function askRag({ question, doc_id, session_id, top_k = 5, style = 'concise', citation_mode = true, model, temperature }) {
-  const payload = { question, doc_id, session_id, top_k, style, citation_mode };
+export async function askRag({ question, doc_id, session_id, top_k = 5, temperature, model }) {
+  const payload = { question, doc_id, session_id, top_k };
+  if (typeof temperature === "number") payload.temperature = temperature;
   if (model) payload.model = model;
-  if (temperature != null) payload.temperature = temperature;
 
-  const { data } = await api.post('/ask', payload);
-  return data; // { answer, sources:[{id,score,doc_id,seq,snippet}], doc_id, session_id, ... }
+  const { data } = await axios.post(`${API_BASE_URL}/ask`, payload);
+  return data; // {answer, citations?, sources?, doc_id, session_id}
+}
+
+export async function listDocs() {
+  const { data } = await axios.get(`${API_BASE_URL}/docs`);
+  return data;
+}
+
+export async function healthz() {
+  const { data } = await axios.get(`${API_BASE_URL}/healthz`);
+  return data;
 }

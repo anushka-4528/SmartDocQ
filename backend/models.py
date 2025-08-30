@@ -9,10 +9,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-
 class Base(DeclarativeBase):
     pass
-
 
 class Document(Base):
     __tablename__ = "documents"
@@ -20,6 +18,7 @@ class Document(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     doc_uuid: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     filename: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    mime_type: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     pages: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     size_bytes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     text: Mapped[str] = mapped_column(Text)
@@ -28,7 +27,6 @@ class Document(Base):
         DateTime(timezone=False), server_default=func.now()
     )
 
-
 class Chunk(Base):
     __tablename__ = "chunks"
 
@@ -36,13 +34,13 @@ class Chunk(Base):
     document_id: Mapped[int] = mapped_column(
         ForeignKey("documents.id", ondelete="CASCADE"), index=True
     )
-    seq: Mapped[int] = mapped_column(Integer)
+    seq: Mapped[int] = mapped_column(Integer, index=True)
     snippet: Mapped[str] = mapped_column(Text)
+    embedding_dim: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # usually 768
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now()
     )
-
 
 class Session(Base):
     __tablename__ = "sessions"
@@ -54,21 +52,20 @@ class Session(Base):
         DateTime(timezone=False), server_default=func.now()
     )
 
-
 class Message(Base):
     __tablename__ = "messages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     session_id_fk: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("sessions.id", ondelete="SET NULL"), nullable=True
+        ForeignKey("sessions.id", ondelete="SET NULL"), nullable=True, index=True
     )
     role: Mapped[str] = mapped_column(String(16))  # 'user' | 'assistant'
     content: Mapped[str] = mapped_column(Text)
+    citations: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON string of citations
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now()
     )
-
 
 class Feedback(Base):
     __tablename__ = "feedback"

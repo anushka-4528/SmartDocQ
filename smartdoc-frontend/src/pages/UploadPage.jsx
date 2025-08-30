@@ -1,17 +1,13 @@
-// src/pages/UploadPage.jsx
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUpload, FiChevronDown, FiFile, FiFileText, FiFilePlus } from "react-icons/fi";
 import { uploadFile, embedDoc } from "../api/smartdoc";
 
-// ✅ PDF.js (legacy build works well with CRA)
+// PDF.js (legacy build works with CRA)
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.js";
-
-// Point PDF.js to the locally bundled worker (no CDN)
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-/** -------- Text extraction (client-side) -------- */
 async function extractClientText(file) {
   const ext = file.name.split(".").pop().toLowerCase();
 
@@ -40,7 +36,6 @@ async function extractClientText(file) {
 
   throw new Error("Unsupported file type. Please upload .txt, .docx, or .pdf");
 }
-/** ---------------------------------------------- */
 
 export default function UploadPage() {
   const navigate = useNavigate();
@@ -62,7 +57,7 @@ export default function UploadPage() {
       const extractedText = await extractClientText(file);
 
       setStatus("Uploading to server …");
-      const up = await uploadFile(file); // { doc_id, meta:{filename,pages,size_bytes}, text }
+      const up = await uploadFile(file); // { doc_id, meta, text }
       if (!up?.doc_id) throw new Error("Backend did not return doc_id");
 
       const { doc_id, meta } = up;
@@ -70,7 +65,7 @@ export default function UploadPage() {
       setStatus("Embedding & indexing …");
       await embedDoc(doc_id);
 
-      // Persist preview for Documents page
+      // Save small record for Documents page
       const docs = JSON.parse(localStorage.getItem("uploadedDocs") || "[]");
       docs.push({
         id: doc_id,
@@ -88,14 +83,14 @@ export default function UploadPage() {
       alert(err?.message || "Upload failed");
     } finally {
       setBusy(false);
-      e.target.value = ""; // reset input so same file can be re-selected
+      e.target.value = ""; // allow re-selecting same file
     }
   };
 
   return (
     <div className="hero">
       <h1>SmartDocQ with GenAI</h1>
-      <p>Upload your document. We’ll extract, embed and index it, then you can chat with citations.</p>
+      <p>Upload a document. We’ll extract, embed, and index it. Then you can ask grounded questions with citations.</p>
 
       <div className="button-row">
         <div className="upload-dropdown">

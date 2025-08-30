@@ -13,11 +13,11 @@ export default function App() {
       <Route path="/" element={<SplashScreen />} />
       <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/upload" element={<UploadPage />} />
-      {/* ✅ add this redirect so /uploads also works */}
+      {/* allow /uploads to redirect to /upload */}
       <Route path="/uploads" element={<Navigate to="/upload" replace />} />
       <Route path="/documents" element={<DocumentsListPage />} />
       <Route path="/qa/:id" element={<DocumentQAPage />} />
-      {/* optional: catch-all to welcome */}
+      {/* catch-all to welcome (optional) */}
       {/* <Route path="*" element={<Navigate to="/welcome" replace />} /> */}
     </Routes>
   );

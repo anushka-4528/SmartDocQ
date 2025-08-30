@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from typing import List, Optional, Dict, Any
 
-
 def build_context(
     full_text: str,
     candidate_chunks: Optional[List[str]] = None,
@@ -17,13 +16,11 @@ def build_context(
     full = (full_text or "")[:max_chars]
     parts = []
     if candidate_chunks:
-        # Number chunks so the model can cite them as [C1], [C2], ...
         numbered = [f"[C{i+1}] {c}" for i, c in enumerate(candidate_chunks)]
         parts.append("Retrieved chunks:\n" + "\n\n".join(numbered))
     if full:
         parts.append("Additional context:\n" + full)
     return "\n\n".join(parts).strip() or "No context."
-
 
 def build_prompt(
     context: str,
@@ -55,18 +52,16 @@ User question:
 Now return ONLY a JSON object with fields "answer" and "citations".
 """.strip()
 
-
 def parse_llm_json(raw_text: str) -> Dict[str, Any]:
     """
     Attempts to parse the model response as JSON.
     If the model returned extra text, try to locate a JSON object; otherwise fall back.
     """
-    raw = (raw_text or "").strip()
+    raw = (raw_text or "")[:50000].strip()  # clamp defensively
 
     # Fast path
     try:
         obj = json.loads(raw)
-        # normalize fields
         ans = obj.get("answer", "")
         cits = obj.get("citations", [])
         if not isinstance(cits, list):
